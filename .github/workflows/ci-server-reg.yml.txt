@@ -1,0 +1,28 @@
+name: CI - Service Registry
+
+on:
+  push:
+    paths:
+      - "service-registry/**"
+      - "pom.xml"
+  pull_request:
+    paths:
+      - "service-registry/**"
+      - "pom.xml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Build Gateway Service
+        run: mvn clean install -pl service-registry -am -DskipTests
