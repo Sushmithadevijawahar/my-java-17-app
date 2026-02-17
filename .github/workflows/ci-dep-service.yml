@@ -52,9 +52,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             pkill -f department-service || true
-
-            nohup java -jar $(ls /home/ec2-user/microservices/department-service/*.jar | head -n 1) \
+        
+            nohup java -jar /home/ec2-user/microservices/department-service/department-service-1.0.0.jar \
               --spring.profiles.active=prod \
               --spring.datasource.username=${{ secrets.DB_USERNAME }} \
               --spring.datasource.password=${{ secrets.DB_PASSWORD }} \
-              > /home/ec2-user/microservices/department-service/app.log 2>&1 < /dev/null &
+              > /home/ec2-user/microservices/department-service/app.log 2>&1 &
