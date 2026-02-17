@@ -29,8 +29,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "target/*.jar"
-          target: "/opt/microservices/department-service"
+          source: "target/Department-service-1.0.0.jar"
+          target: "/microservices/department-service"
 
       - name: Restart Service on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -40,7 +40,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             pkill -f 'department-service' || true
-            nohup java -jar /opt/microservices/department-service/$(ls /opt/microservices/department-service | grep .jar) \
+            nohup java -jar /microservices/department-service/$(ls /microservices/department-service | grep .jar) \
               --spring.datasource.username=${{ secrets.DB_USERNAME }} \
               --spring.datasource.password=${{ secrets.DB_PASSWORD }} \
-              > /opt/microservices/department-service/app.log 2>&1 &
+              > /microservices/department-service/app.log 2>&1 &
