@@ -1,0 +1,46 @@
+name: Deploy project Service
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "target/*.jar"
+          target: "/opt/microservices/project-service"
+
+      - name: Restart Service on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            pkill -f 'project-service' || true
+            nohup java -jar /opt/microservices/project-service/$(ls /opt/microservices/project-service | grep .jar) \
+              --spring.datasource.username=${{ secrets.DB_USERNAME }} \
+              --spring.datasource.password=${{ secrets.DB_PASSWORD }} \
+              > /opt/microservices/project-service/app.log 2>&1 &
