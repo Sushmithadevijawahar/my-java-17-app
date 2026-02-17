@@ -30,7 +30,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "gtwy-api-service/target/*.jar"
+          source: "gtwy-api-service/target/gtwy-api-service.0.0.1.jar"
           target: "/microservices/gateway-service"
 
       - name: Restart Gateway on EC2

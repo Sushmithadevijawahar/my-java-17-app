@@ -40,7 +40,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "project-service/target/*.jar"
+          source: "project-service/target/project-service-1.0.0.jar"
           target: "/home/ec2-user/microservices/project-service"
 
           # 6️⃣ RUN SERVICE WITH DB CONFIG  ✅ THIS IS WHERE DB SECRETS GO
@@ -53,7 +53,7 @@ jobs:
           script: |
             pkill -f project-service || true
 
-            nohup java -jar $(ls /home/ec2-user/microservices/project-service/*.jar | head -n 1) \
+            nohup java -jar $(ls /home/ec2-user/microservices/project-service/project-service-1.0.0.jar | head -n 1) \
               --spring.profiles.active=prod \
               --spring.datasource.username=${{ secrets.DB_USERNAME }} \
               --spring.datasource.password=${{ secrets.DB_PASSWORD }} \

@@ -40,7 +40,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "department-service/target/*.jar"
+          source: "department-service/target/department-service-1.0.0.jar"
           target: "/home/ec2-user/microservices/department-service"
 
           # 6️⃣ RUN SERVICE WITH DB CONFIG  ✅ THIS IS WHERE DB SECRETS GO
