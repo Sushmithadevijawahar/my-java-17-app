@@ -21,7 +21,7 @@ jobs:
 
       - name: Build Service Registry
         run: |
-          cd  gateway-service
+          cd  gtwy-api-service
           mvn clean package -DskipTests
 
       - name: Copy JAR to EC2
