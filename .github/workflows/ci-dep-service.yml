@@ -10,28 +10,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
+      # 1️⃣ Checkout
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 2️⃣ Java
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      - name: Build with Maven
-        run: mvn clean package -DskipTests
+      # 3️⃣ BUILD (IMPORTANT: cd into service)
+      - name: Build Department Service
+        run: |
+          cd department-service
+          mvn clean package -DskipTests
 
+      # 4️⃣ DEBUG (KEEP until pipeline is green)
+      - name: Verify JAR
+        run: |
+          ls -l department-service/target
+          find . -name "*.jar"
+
+      # 5️⃣ COPY JAR TO EC2  ✅ THIS IS WHERE SOURCE GOES
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "target/Department-service-1.0.0.jar"
-          target: "/microservices/department-service"
+          source: "department-service/target/department-service-1.0.0.jar"
+          target: "/home/ec2-user/microservices/department-service"
 
+      # 6️⃣ RUN SERVICE WITH DB CONFIG  ✅ THIS IS WHERE DB SECRETS GO
       - name: Restart Service on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -39,8 +51,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            pkill -f 'department-service' || true
-            nohup java -jar /microservices/department-service/$(ls /microservices/department-service | grep .jar) \
+            pkill -f department-service || true
+
+            nohup java -jar /home/ec2-user/microservices/department-service/department-service-1.0.0.jar \
               --spring.datasource.username=${{ secrets.DB_USERNAME }} \
               --spring.datasource.password=${{ secrets.DB_PASSWORD }} \
-              > /microservices/department-service/app.log 2>&1 &
+              > /home/ec2-user/microservices/department-service/app.log 2>&1 &
