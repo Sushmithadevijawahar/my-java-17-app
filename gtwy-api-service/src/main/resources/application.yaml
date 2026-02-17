@@ -1,24 +1,40 @@
 server:
-    port: 8060
+  port: 8060
+
 spring:
   application:
-    name: gtwy-api-service
-cloud:
-  gateway:
-    routes:
-      - id: employee-service
-        uri: lb://employee-service
-        predicates:
-          - Path=/employee/**
-      - id: department-service
-        uri: lb://department-service
-        predicates:
-          - Path=/department/**
-      - id: hr-service
-        uri: lb://hr-service
-        predicates:
-          - Path=/hr/**
+    name: GTWY-API-SERVICE
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: employee-service
+          uri: lb://EMPLOYEE-SERVICE
+          predicates:
+            - Path=/employee/**
+          filters:
+            - StripPrefix=1
+
+        - id: department-service
+          uri: lb://DEPARTMENT-SERVICE
+          predicates:
+            - Path=/department/**
+          filters:
+            - StripPrefix=1
+
+        - id: project-service
+          uri: lb://PROJECT-SERVICE
+          predicates:
+            - Path=/project/**
+          filters:
+            - StripPrefix=1
+
+
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: http://<EUREKA_IP>:8761/eureka/

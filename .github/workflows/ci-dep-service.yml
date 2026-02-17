@@ -1,115 +1,46 @@
-server:
-  port: 8082
+name: Deploy Department Service
 
-spring:
-  application:
-    name: department-service
-  datasource:
-    url: jdbc:h2:mem:departmentdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+on:
+  push:
+    branches:
+      - main
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
-  instance:
-    prefer-ip-address: true
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
-# Resilience4j Circuit Breaker Configuration
-resilience4j:
-  circuitbreaker:
-    configs:
-      default:
-        # Number of calls to record before calculating error rate
-        sliding-window-size: 10
-        # Minimum number of calls before circuit can open
-        minimum-number-of-calls: 5
-        # Percentage of failures to open circuit
-        failure-rate-threshold: 50
-        # Time circuit stays open before transitioning to half-open
-        wait-duration-in-open-state: 10000
-        # Number of calls in half-open state to determine if circuit should close
-        permitted-number-of-calls-in-half-open-state: 3
-        # Automatically transition from open to half-open
-        automatic-transition-from-open-to-half-open-enabled: true
-        # Sliding window type (COUNT_BASED or TIME_BASED)
-        sliding-window-type: COUNT_BASED
-    instances:
-      employeeService:
-        base-config: default
-        failure-rate-threshold: 60
-        wait-duration-in-open-state: 15000
+    steps:
 
-  # Retry Configuration
-  retry:
-    configs:
-      default:
-        max-attempts: 3
-        wait-duration: 1000
-        retry-exceptions:
-          - org.springframework.web.client.HttpServerErrorException
-          - java.io.IOException
-          - feign.FeignException
-    instances:
-      employeeService:
-        base-config: default
-        max-attempts: 2
-        wait-duration: 2000
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-  # Rate Limiter Configuration
-  ratelimiter:
-    configs:
-      default:
-        limit-for-period: 10
-        limit-refresh-period: 1s
-        timeout-duration: 0
-    instances:
-      employeeService:
-        base-config: default
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-  # Bulkhead Configuration (limit concurrent calls)
-  bulkhead:
-    configs:
-      default:
-        max-concurrent-calls: 25
-        max-wait-duration: 0
-    instances:
-      employeeService:
-        base-config: default
-        max-concurrent-calls: 10
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
 
-# Actuator endpoints for monitoring
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,circuitbreakers,circuitbreakerevents,ratelimiters,retries,bulkheads
-  endpoint:
-    health:
-      show-details: always
-  health:
-    circuitbreakers:
-      enabled: true
-    ratelimiters:
-      enabled: true
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "target/*.jar"
+          target: "/opt/microservices/department-service"
 
-# Logging
-logging:
-  level:
-    io.github.resilience4j: DEBUG
-    com.microservices.departmentservice: DEBUG
+      - name: Restart Service on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            pkill -f 'department-service' || true
+            nohup java -jar /opt/microservices/department-service/$(ls /opt/microservices/department-service | grep .jar) \
+              --spring.datasource.username=${{ secrets.DB_USERNAME }} \
+              --spring.datasource.password=${{ secrets.DB_PASSWORD }} \
+              > /opt/microservices/department-service/app.log 2>&1 &

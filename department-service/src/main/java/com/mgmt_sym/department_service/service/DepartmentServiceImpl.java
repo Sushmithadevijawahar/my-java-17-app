@@ -285,13 +285,20 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Bulkhead(name = "employeeService")
     public List<EmployeeDTO> getAvailableEmployees() {
         log.info("Fetching available employees");
-        List<EmployeeDTO> allEmployees = employeeClient.getAllEmployees();
+
+        List<EmployeeDTO> allEmployees =
+                employeeClient.getAllEmployeesWithOutPagination();  // ✅ CORRECT METHOD
+
         List<EmployeeDTO> available = allEmployees.stream()
                 .filter(emp -> emp.getDepartmentId() == null)
-                .collect(Collectors.toList());
+                .toList();
+
         log.info("Found {} available employees", available.size());
+        log.info("Total employees fetched: {}", allEmployees.size());
+
         return available;
     }
+
 
     // Fallback method for getAvailableEmployees
     public List<EmployeeDTO> getAvailableEmployeesFallback(Exception ex) {

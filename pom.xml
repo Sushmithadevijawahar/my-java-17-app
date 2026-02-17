@@ -7,10 +7,11 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>gateway-service</module>
+    <module>department-service</module>
     <module>employee-service</module>
-    <module>auth-service</module>
-    <module>config-service</module>
+    <module>service-registry</module>
+    <module>project-service</module>
+    <module>gtwy-api-service</module>
   </modules>
 
   <properties>

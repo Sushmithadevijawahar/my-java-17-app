@@ -3,6 +3,8 @@ package com.mgmt_sym.employee_service.controller;
 import com.mgmt_sym.employee_service.dto.EmployeeDTO;
 import com.mgmt_sym.employee_service.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/employees")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -30,8 +31,8 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EmployeeDTO>> getAllEmployees() {
-        List<EmployeeDTO> employees = employeeService.getAllEmployees();
+    public ResponseEntity<Page<EmployeeDTO>> getAllEmployees(Pageable pageable) {
+        Page<EmployeeDTO> employees = employeeService.getAllEmployees(pageable);
         return ResponseEntity.ok(employees);
     }
 
@@ -58,4 +59,16 @@ public class EmployeeController {
         employeeService.deleteEmployee(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/available")
+    public ResponseEntity<List<EmployeeDTO>> getAvailableEmployees() {
+        return ResponseEntity.ok(employeeService.getAvailableEmployees());
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<EmployeeDTO>> getAllEmployeesWithoutPaging() {
+        return ResponseEntity.ok(employeeService.getAllEmployeesWithoutPaging());
+    }
+
+
 }

@@ -5,7 +5,12 @@ import com.mgmt_sym.employee_service.model.Employee;
 import com.mgmt_sym.employee_service.repository.EmployeeRepository;
 import com.mgmt_sym.employee_service.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,7 +20,11 @@ import java.util.stream.Collectors;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
-
+    @Override
+    public Page<EmployeeDTO> getAllEmployees(Pageable pageable) {
+        return employeeRepository.findAll(pageable)
+                .map(this::mapToDTO);
+    }
     @Override
     public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
         Employee employee = mapToEntity(employeeDTO);
@@ -106,4 +115,22 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setStatus(dto.getStatus() != null ? dto.getStatus() : "ACTIVE");
         return employee;
     }
+    @Override
+    public List<EmployeeDTO> getAvailableEmployees() {
+        return employeeRepository.findByDepartmentIdIsNull()
+                .stream()
+                .map(this::mapToDTO) // or your convert method
+                .toList();
+    }
+    @Override
+    public List<EmployeeDTO> getAllEmployeesWithoutPaging() {
+        return employeeRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+
+
+
 }
