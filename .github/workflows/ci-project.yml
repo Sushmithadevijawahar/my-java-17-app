@@ -20,8 +20,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Build with Maven
-        run: mvn clean package -DskipTests
+      - name: Build Department Service
+        run: mvn -f department-service/pom.xml clean package -DskipTests
 
       - name: Copy JAR to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -44,3 +44,9 @@ jobs:
               --spring.datasource.username=${{ secrets.DB_USERNAME }} \
               --spring.datasource.password=${{ secrets.DB_PASSWORD }} \
               > /microservices/project-service/app.log 2>&1 &
+
+      - name: Debug – list JAR files
+        run: |
+            pwd
+            ls -R | grep jar
+
